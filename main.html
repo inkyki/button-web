@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>선물 만들었다여!</title>
+
+  <style>
+    :root{
+      --bg:#0b0b0d;
+      --card:rgba(255,255,255,.07);
+      --stroke:rgba(255,255,255,.14);
+      --text:#fff;
+      --muted:rgba(255,255,255,.75);
+      --btn:#ffffff;
+      --btnText:#0b0b0d;
+      --btnGhost:rgba(255,255,255,.14);
+    }
+    *{box-sizing:border-box}
+
+    body{
+      margin:0; height:100vh; overflow:hidden;
+      display:flex; align-items:center; justify-content:center;
+      font-family:system-ui, -apple-system, sans-serif;
+      background:radial-gradient(1200px 800px at 50% 30%, rgba(255,255,255,.08), transparent 60%), var(--bg);
+      color:var(--text);
+    }
+
+    .wrap{
+      width:min(760px, 94vw);
+      min-height:500px;
+      padding:34px;
+      border:1px solid var(--stroke);
+      border-radius:20px;
+      background:var(--card);
+      box-shadow:0 18px 60px rgba(0,0,0,.45);
+      position:relative;
+      text-align:center;
+      overflow:visible;
+    }
+
+    .top{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      margin-bottom:18px;
+    }
+    .toggle{
+      display:flex; align-items:center; justify-content:center; gap:10px;
+      font-size:13px; color:var(--muted);
+      user-select:none;
+    }
+    .switch{
+      position:relative;
+      width:56px; height:32px; border-radius:999px;
+      background:rgba(255,255,255,.12);
+      border:1px solid var(--stroke);
+      overflow:hidden;
+      cursor:pointer;
+    }
+    .knob{
+      width:26px; height:26px; border-radius:999px;
+      background:#fff;
+      position:absolute; top:50%; left:3px;
+      transform:translateY(-50%);
+      transition:left .18s ease;
+    }
+    .switch.on .knob{ left:27px; }
+
+    .msg.sparkle{
+        animation: sparkle 700ms ease-in-out infinite;
+        font-weight: 800;
+        letter-spacing: .2px;
+    }
+
+    @keyframes sparkle{
+        0%,100% { opacity: .75; filter: drop-shadow(0 0 0 rgba(255,255,255,0)); transform: translateY(0);}
+        50%     { opacity: 1;   filter: drop-shadow(0 0 14px rgba(255,255,255,.45)); transform: translateY(-1px);}
+    }
+
+    h1{
+      margin:6px 0 10px;
+      font-size:26px;
+      letter-spacing:-.4px;
+      line-height:1.2;
+    }
+    .sub{
+      margin:0 0 16px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.45;
+      min-height:38px;
+    }
+
+    .btnRow{ display:flex; gap:10px; justify-content:center; margin-top:10px; }
+    button{
+      border:0; border-radius:14px;
+      padding:14px 16px;
+      font-weight:800;
+      font-size:15px;
+    }
+    button:disabled{ opacity:.75; cursor:default; }
+
+    #yes{
+      background:var(--btn);
+      color:var(--btnText);
+      min-width:170px;
+    }
+
+    #no{
+      position:absolute;
+      left:0; top:0;
+      transform:translate(0,0);
+      background:var(--btnGhost);
+      color:var(--text);
+      border:1px solid var(--stroke);
+      backdrop-filter:blur(8px);
+      min-width:170px;
+      z-index:5;
+      touch-action:none;
+      user-select:none;
+
+      transition:left 70ms linear, top 70ms linear;
+    }
+
+    .wrap.confirmed{
+      display:flex;
+      flex-direction:column;
+    }
+    .wrap.confirmed .content{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      gap:14px;
+    }
+    .wrap.confirmed #msg{
+        font-size: 13px;
+        color: rgba(255,255,255,.9);
+    }
+
+    .msg{
+      margin-top:14px;
+      font-size:13px;
+      color:var(--muted);
+      min-height:22px;
+      text-align:center;
+    }
+
+    #no.explode{
+      pointer-events:none;
+      animation: explode 520ms ease-out forwards;
+    }
+    #no.explode::after{
+      content:"";
+      position:absolute;
+      inset:-20px;
+      border-radius:18px;
+      pointer-events:none;
+      background:
+        radial-gradient(circle at 20% 30%, rgba(255,255,255,.55), transparent 35%),
+        radial-gradient(circle at 80% 25%, rgba(255,255,255,.35), transparent 40%),
+        radial-gradient(circle at 50% 85%, rgba(255,255,255,.25), transparent 45%);
+      animation: puff 520ms ease-out forwards;
+      opacity:0;
+    }
+    @keyframes explode{
+      0%   { transform:translate(0,0) scale(1);   opacity:1;   filter:blur(0); }
+      55%  { transform:translate(0,0) scale(1.35) rotate(12deg); opacity:1; }
+      100% { transform:translate(0,0) scale(0);   opacity:0;   filter:blur(2px); }
+    }
+    @keyframes puff{
+      0%   { opacity:0; transform:scale(.7); }
+      30%  { opacity:1; transform:scale(1); }
+      100% { opacity:0; transform:scale(1.5); }
+    }
+
+    .heart{
+      position:absolute;
+      left:0; top:0;
+      font-size:22px;
+      opacity:0;
+      transform:translate(-50%,-50%) scale(.8);
+      animation: heartFly 820ms ease-out forwards;
+      pointer-events:none;
+      filter: drop-shadow(0 6px 18px rgba(0,0,0,.35));
+    }
+    @keyframes heartFly{
+      0%   { opacity:0; transform:translate(-50%,-50%) scale(.6); }
+      12%  { opacity:1; }
+      100% {
+        opacity:0;
+        transform:
+          translate(calc(-50% + var(--dx)), calc(-50% + var(--dy)))
+          rotate(var(--rot))
+          scale(0);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="toggle">
+        <span>오빠에게</span>
+        <div class="switch" id="switch" role="switch" aria-checked="false" tabindex="0">
+          <div class="knob"></div>
+        </div>
+        <span>주잉님께</span>
+      </div>
+    </div>
+
+    <div class="content">
+      <h1 id="q">우리 오랫동안, 어쩌면 평생동안 행복하게 사랑하쟈!🤭</h1>
+      <p class="sub" id="sub">하나 선택하면 무르기 없다여!!</p>
+
+      <div class="btnRow">
+        <button id="yes">당연하지❤️</button>
+      </div>
+
+      <div class="msg" id="msg"></div>
+    </div>
+
+    <button id="no">시러💥</button>
+  </div>
+
+  <script>
+    const switchE1 = document.getElementById("switch");
+    const qE1 = document.getElementById("q");
+    const subE1 = document.getElementById("sub");
+    const yesBtn = document.getElementById("yes");
+    const noBtn = document.getElementById("no");
+    const msgE1 = document.getElementById("msg");
+    const wrapE1 = document.querySelector(".wrap");
+
+    const YES_EFFECT = "explode";
+
+    let duetMode = false;
+    let noDisabled = false;
+    let pcEvadeCount = 0;
+    let lastEvadeTs = 0;
+
+    const PC_THRESHOLD = 160;
+    const PC_STEP = 65;
+
+    const TOUCH_STEP = 150;
+    const TOUCH_GLIDE_MS = 200;
+
+    const copy = {
+      normal: {
+        q: "우리 오랫동안, 어쩌면 평생동안 행복하게 사랑하쟈!🤭",
+        sub: "하나 선택하면 무르기 없다여!!",
+        yes: "당연하지❤️",
+        no: "시러💥",
+        yesMsg: "히히 나두 사랑해애🫶",
+        evadeMouseMsg: "못 잡겠지이😝",
+        evadeTouchMsg: "못 잡겠지이😝",
+        evadeClickMsg: "그거 누를 생각 아니지?🥺",
+        yesHoverSubs: ["그치그치 얼릉 눌러!🫢", "맞아 그거 눌러조!🥹"]
+      },
+      duet: {
+        q: "주잉님 전용으로 평생 길들여지고 싶어요🐹",
+        sub: "말 잘 듣고 열심히 봉사할 자신 잇어요..!",
+        yes: "당연하지🫳",
+        no: "안돼😠",
+        yesMsg: "히히 선택해주셔서 감사해요!! 앞으로 더더욱 열심히 하겠슴니다🙇‍♀️",
+        evadeMouseMsg: "왜...?🥺",
+        evadeTouchMsg: "이 버튼 말구 다른거😭",
+        evadeClickMsg: "이 버튼 말구 다른거😭",
+        yesHoverSubs: ["쿼카 닮은 애 옆에서 격하게 끄덕거리는 중..!", "눈 초롱초롱 쿼카 등장!!🐹"]
+      }
+    };
+
+    function currentCopy(){ return duetMode ? copy.duet : copy.normal; }
+    function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+
+    function setNoTransition(mode){
+      if(mode === "touch"){
+        noBtn.style.transition =
+           `left ${TOUCH_GLIDE_MS}ms cubic-bezier(.06,.96,.18,1),
+            top ${TOUCH_GLIDE_MS}ms cubic-bezier(.06,.96,.18,1)`;
+      } else {
+        noBtn.style.transition = "left 70ms linear, top 70ms linear";
+      }
+    }
+
+    function setNoPos(left, top){
+      noBtn.style.left = left + "px";
+      noBtn.style.top  = top + "px";
+      noBtn.style.transform = "translate(0,0)";
+    }
+
+    function resetNoButton(){
+      noDisabled = false;
+      noBtn.style.display = "block";
+      noBtn.classList.remove("explode");
+      noBtn.style.pointerEvents = "auto";
+      noBtn.style.opacity = "1";
+      noBtn.style.filter = "";
+    }
+
+    function placeNoButton(){
+      const pad = 14;
+      const bw = noBtn.offsetWidth;
+      const bh = noBtn.offsetHeight;
+      const w = wrapE1.clientWidth;
+      const h = wrapE1.clientHeight;
+
+      let left = (w - bw) / 2;
+      let top  = h * 0.72;
+
+      left = clamp(left, pad, w - bw - pad);
+      top  = clamp(top,  pad, h - bh - pad);
+
+      setNoTransition("mouse");
+      setNoPos(left, top);
+    }
+
+    function evadeFrom(clientX, clientY, step, mode){
+      const pad = 14;
+      const wrapRect = wrapE1.getBoundingClientRect();
+      const btnRect  = noBtn.getBoundingClientRect();
+
+      const btnCx = btnRect.left + btnRect.width/2;
+      const btnCy = btnRect.top  + btnRect.height/2;
+
+      let dx = btnCx - clientX;
+      let dy = btnCy - clientY;
+      let len = Math.hypot(dx, dy) || 1;
+      dx /= len; dy /= len;
+      
+      const intensity = 1 + (1 - Math.min(len / 250, 1)) * 1.4;
+      dx *= intensity;
+      dy *= intensity;
+
+      const jitter = 0.28;
+      dx += (Math.random() - 0.5) * jitter;
+      dy += (Math.random() - 0.5) * jitter;
+
+      const targetCx = btnCx + dx * step;
+      const targetCy = btnCy + dy * step;
+
+      let left = (targetCx - wrapRect.left) - noBtn.offsetWidth/2;
+      let top  = (targetCy - wrapRect.top)  - noBtn.offsetHeight/2;
+
+      const OUTSIDE_MARGIN = 60;
+
+      left = clamp(
+        left,
+        -OUTSIDE_MARGIN,
+        wrapE1.clientWidth - noBtn.offsetWidth + OUTSIDE_MARGIN
+      );
+
+      top = clamp(
+        top,
+        -OUTSIDE_MARGIN,
+        wrapE1.clientHeight - noBtn.offsetHeight + OUTSIDE_MARGIN
+      );
+
+      const VIEW_PAD = 10;
+
+      const viewportMinX = VIEW_PAD;
+      const viewportMinY = VIEW_PAD;
+      const viewportMaxX = window.innerWidth - noBtn.offsetWidth - VIEW_PAD;
+      const viewportMaxY = window.innerHeight - noBtn.offsetHeight - VIEW_PAD;
+
+      let screenLeft = wrapRect.left + left;
+      let screenTop = wrapRect.top + top;
+
+      screenLeft = clamp(screenLeft, viewportMinX, viewportMaxX);
+      screenTop = clamp(screenTop, viewportMinY, viewportMaxY);
+
+      left = screenLeft - wrapRect.left;
+      top = screenTop - wrapRect.top;
+
+      setNoTransition(mode);
+      setNoPos(left, top);
+    }
+
+    function explodeNoButton(){
+      noDisabled = true;
+      noBtn.classList.add("explode");
+      setTimeout(() => { noBtn.style.display = "none"; }, 540);
+    }
+
+    function heartBurst(){
+      const wrapRect = wrapE1.getBoundingClientRect();
+      const r = noBtn.getBoundingClientRect();
+      const cx = (r.left - wrapRect.left) + r.width/2;
+      const cy = (r.top  - wrapRect.top ) + r.height/2;
+
+      const count = 14;
+      for(let i=0;i<count;i++){
+        const el = document.createElement("div");
+        el.className = "heart";
+        el.textContent = "❤";
+
+        const angle = Math.random() * Math.PI * 2;
+        const dist  = 90 + Math.random() * 130;
+        const dx = Math.cos(angle) * dist;
+        const dy = Math.sin(angle) * dist - (40 + Math.random()*40);
+        const rot = (Math.random()*80 - 40) + "deg";
+
+        el.style.left = cx + "px";
+        el.style.top  = cy + "px";
+        el.style.setProperty("--dx", dx + "px");
+        el.style.setProperty("--dy", dy + "px");
+        el.style.setProperty("--rot", rot);
+
+        wrapE1.appendChild(el);
+        setTimeout(() => el.remove(), 900);
+      }
+
+      noDisabled = true;
+      noBtn.style.display = "none";
+    }
+
+    function applyMode(){
+      const c = currentCopy();
+      qE1.textContent = c.q;
+      subE1.textContent = c.sub;
+      yesBtn.textContent = c.yes;
+      noBtn.textContent = c.no;
+
+      wrapE1.classList.remove("confirmed");
+      yesBtn.disabled = false;
+      msgE1.textContent = "";
+      isHoverYes = false;
+      isNearNo = false;
+      yesHoverPicked = "";
+      msgE1.classList.remove("sparkle");
+      subLocked = false;
+      clearTimeout(msgHoverTimer);
+
+      resetNoButton();
+      placeNoButton();
+    }
+
+    window.addEventListener("pointermove", (e) => {
+      if (noDisabled || e.pointerType !== "mouse") return;
+
+      const now = Date.now();
+      if (now - lastEvadeTs < 28) return;
+      lastEvadeTs = now;
+
+      const r = noBtn.getBoundingClientRect();
+      const cx = r.left + r.width/2;
+      const cy = r.top  + r.height/2;
+      const dist = Math.hypot(e.clientX - cx, e.clientY - cy);
+
+      const warmup = pcEvadeCount < 2;
+      const threshold = warmup ? 120 : 200;
+      const stepBase = warmup ? 28 : 78;
+
+      if (dist < threshold){
+        pcEvadeCount++;
+
+        const c = currentCopy();
+        
+        isNearNo = true;
+        lastEvadeText = warmup ? "도망간다아" : c.evadeMouseMsg;
+
+        updateMsg();
+
+        const intensity = warmup ? 1.0 : (1 + (1 - Math.min(dist / 220, 1)) * 1.8);
+        const step = stepBase * intensity;
+
+        evadeFrom(e.clientX, e.clientY, step, "mouse");
+      } else {
+        isNearNo = false;
+        updateMsg();
+      }
+    });
+
+    noBtn.addEventListener("pointerdown", (e) => {
+      if (noDisabled || e.pointerType !== "touch") return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      const c = currentCopy();
+      msgE1.textContent = c.evadeTouchMsg;
+      evadeFrom(e.clientX, e.clientY, TOUCH_STEP, "touch");
+    }, {passive:false});
+
+    noBtn.addEventListener("click", (e) => {
+      if (noDisabled) return;
+      e.preventDefault();
+
+      const c = currentCopy();
+      msgE1.textContent = c.evadeClickMsg;
+      evadeFrom(e.clientX || 0, e.clientY || 0, PC_STEP, "mouse");
+    });
+
+    yesBtn.addEventListener("click", () => {
+      clearTimeout(msgHoverTimer);
+
+      const c = currentCopy();
+      msgE1.textContent = c.yesMsg;
+      subLocked = true;
+      subE1.textContent = currentCopy().sub;
+
+      wrapE1.classList.add("confirmed");
+      yesBtn.disabled = true;
+
+      if (YES_EFFECT === "hearts") heartBurst();
+      else explodeNoButton();
+    });
+
+    function setSwitch(on){
+      duetMode = on;
+      switchE1.classList.toggle("on", on);
+      switchE1.setAttribute("aria-checked", String(on));
+      applyMode();
+    }
+
+    switchE1.addEventListener("click", () => setSwitch(!duetMode));
+    switchE1.addEventListener("keydown", (e) => {
+      if(e.key === "Enter" || e.key === " "){
+        e.preventDefault();
+        setSwitch(!duetMode);
+      }
+    });
+
+    let subLocked = false;
+    let msgHoverTimer = null;
+    
+    let isHoverYes = false;
+    let isNearNo = false;
+    let lastEvadeText = "";
+    let yesHoverPicked = "";
+
+    function pickYesHoverMsgOnce(){
+        const arr = currentCopy().yesHoverSubs || [];
+        if (arr.length === 0) return;
+        return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function updateMsg(){
+        if (subLocked) return;
+
+        if (isHoverYes){
+            msgE1.textContent = yesHoverPicked;
+            msgE1.classList.add("sparkle");
+            return;
+        }
+
+        msgE1.classList.remove("sparkle");
+
+        if (isNearNo){
+            msgE1.textContent = lastEvadeText;
+            return;
+        }
+
+        msgE1.textContent = "";
+    }
+
+    yesBtn.addEventListener("mouseenter", () => {
+        if(subLocked) return;
+        isHoverYes = true;
+        yesHoverPicked = pickYesHoverMsgOnce();
+        updateMsg();
+    });
+
+    yesBtn.addEventListener("mouseleave", () => {
+        if(subLocked) return;
+        isHoverYes = false;
+        updateMsg();
+    });
+    
+    setSwitch(false);
+    window.addEventListener("resize", () => {
+      if(!noDisabled){placeNoButton();
+      }
+    });
+  </script>
+</body>
+</html>
